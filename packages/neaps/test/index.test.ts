@@ -6,6 +6,7 @@ import {
   useStation,
   getTimelinePrediction,
   getWaterLevelAtTime,
+  stationsNear,
 } from "../src/index.js";
 import { describe, test, expect } from "vitest";
 
@@ -282,6 +283,19 @@ describe("nearestStation", () => {
       const station = nearestStation(position);
       expect(station.source.id).toBe("8722588");
     });
+  });
+
+  test("raises error when no stations found", () => {
+    expect(() => nearestStation({ lat: 0, lon: 0, maxDistance: 1 })).toThrow(
+      'No stations found with options: {"lat":0,"lon":0,"maxDistance":1}',
+    );
+  });
+});
+
+describe("stationsNear", () => {
+  test("finds nearby stations", () => {
+    const nearby = stationsNear({ lat: 26.772, lon: -80.05, maxResults: 3 });
+    expect(nearby.length).toBe(3);
   });
 });
 

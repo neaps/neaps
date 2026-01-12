@@ -1,7 +1,12 @@
-import { getDistance } from "geolib";
-import { stations, type Station } from "@neaps/tide-database";
+import {
+  stations,
+  near,
+  nearest,
+  type Station,
+  type NearOptions,
+  type NearestOptions,
+} from "@neaps/tide-database";
 import tidePredictor, { type TimeSpan, type ExtremesInput } from "@neaps/tide-predictor";
-import type { GeolibInputCoordinates } from "geolib/es/types";
 
 type Units = "meters" | "feet";
 type PredictionOptions = {
@@ -34,41 +39,39 @@ const defaultUnits: Units = "meters";
  *   datum: 'MLLW', // optional, defaults to MLLW if available
  * })
  */
-export function getExtremesPrediction(options: GeolibInputCoordinates & ExtremesOptions) {
+export function getExtremesPrediction(options: NearestOptions & ExtremesOptions) {
   return nearestStation(options).getExtremesPrediction(options);
 }
 
 /**
  * Get timeline prediction using the nearest station to the given position.
  */
-export function getTimelinePrediction(options: GeolibInputCoordinates & TimelineOptions) {
+export function getTimelinePrediction(options: NearestOptions & TimelineOptions) {
   return nearestStation(options).getTimelinePrediction(options);
 }
 
 /**
  * Get water level at a specific time using the nearest station to the given position.
  */
-export function getWaterLevelAtTime(options: GeolibInputCoordinates & WaterLevelOptions) {
+export function getWaterLevelAtTime(options: NearestOptions & WaterLevelOptions) {
   return nearestStation(options).getWaterLevelAtTime(options);
 }
 
 /**
  * Find the nearest station to the given position.
  */
-export function nearestStation(position: GeolibInputCoordinates) {
-  return stationsNear(position, 1)[0];
+export function nearestStation(options: NearestOptions) {
+  const data = nearest(options);
+  if (!data) throw new Error(`No stations found with options: ${JSON.stringify(options)}`);
+  return useStation(...data);
 }
 
 /**
  * Find stations near the given position.
  * @param limit Maximum number of stations to return (default: 10)
  */
-export function stationsNear(position: GeolibInputCoordinates, limit = 10) {
-  return stations
-    .map((station) => ({ station, distance: getDistance(position, station) }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, limit)
-    .map(({ station, distance }) => useStation(station, distance));
+export function stationsNear(options: NearOptions) {
+  return near(options).map(([station, distance]) => useStation(station, distance));
 }
 
 /**
@@ -92,8 +95,8 @@ export function findStation(query: string) {
 export function useStation(station: Station, distance?: number) {
   // If subordinate station, use the reference station for datums and constituents
   let reference = station;
-  if (station.type === "subordinate") {
-    reference = findStation(station.offsets?.reference || "");
+  if (station.type === "subordinate" && station.offsets?.reference) {
+    reference = findStation(station.offsets?.reference);
   }
   const { datums, harmonic_constituents } = reference;
 
@@ -109,7 +112,7 @@ export function useStation(station: Station, distance?: number) {
 
       if (typeof datumOffset !== "number") {
         throw new Error(
-          `Station ${station.id} missing ${datum} datum. Available datums: ${Object.keys(datums || {}).join(", ")}`,
+          `Station ${station.id} missing ${datum} datum. Available datums: ${Object.keys(datums).join(", ")}`,
         );
       }
 
