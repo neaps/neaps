@@ -1,0 +1,8 @@
+import { defineProject } from "vitest/config";
+
+export default defineProject({
+  test: {
+    disableConsoleIntercept: true,
+    setupFiles: ["./test/setup.ts"],
+  },
+});
