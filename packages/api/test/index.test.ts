@@ -21,30 +21,6 @@ describe("GET /extremes", () => {
     expect(Array.isArray(response.body.extremes)).toBe(true);
   });
 
-  test("accepts latitude/longitude parameter variations", async () => {
-    const response = await request(app).get("/extremes").query({
-      latitude: 26.772,
-      longitude: -80.05,
-      start: "2025-12-17T00:00:00Z",
-      end: "2025-12-18T00:00:00Z",
-    });
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("extremes");
-  });
-
-  test("accepts lng parameter", async () => {
-    const response = await request(app).get("/extremes").query({
-      latitude: 26.772,
-      longitude: -80.05,
-      start: "2025-12-17T00:00:00Z",
-      end: "2025-12-18T00:00:00Z",
-    });
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("extremes");
-  });
-
   test("accepts datum parameter", async () => {
     const response = await request(app).get("/extremes").query({
       latitude: 26.772,
