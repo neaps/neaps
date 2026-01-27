@@ -1,11 +1,10 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
+  exports: true,
   entry: ["./src/index.ts"],
   dts: true,
-  format: ["esm"],
   sourcemap: true,
   declarationMap: true,
-  target: "node18",
   platform: "node",
 });
