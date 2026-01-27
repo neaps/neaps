@@ -125,7 +125,7 @@ router.get("/stations/:id/timeline", (req: Request, res: Response) => {
 });
 
 router.use(((err, _req, res, next) => {
-  if (!next) return;
+  if (!err) return next();
 
   const status = err.status ?? 500;
   const message = err.message ?? "Unknown error";
