@@ -18,9 +18,13 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "neaps-server": "./bin/server.js"
+  },
   "scripts": {
     "build": "tsc && tsdown",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "start": "node bin/server.js"
   },
   "dependencies": {
     "neaps": "^0.2.0",
