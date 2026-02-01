@@ -62,7 +62,7 @@ router.get("/tides/stations", (req: Request, res: Response) => {
 
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
 
-  const stations = stationsNear({ latitude, longitude }, limit);
+  const stations = stationsNear({ latitude, longitude, maxResults: limit });
   res.json(stations);
 });
 
