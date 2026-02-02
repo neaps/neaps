@@ -173,11 +173,9 @@ describe("GET /tides/timeline", () => {
   });
 });
 
-describe("GET /tides/stations/:id", () => {
+describe("GET /tides/stations/:source/:id", () => {
   test("finds station by ID", async () => {
-    const response = await request(app).get(
-      `/tides/stations/${encodeURIComponent("noaa/8722588")}`,
-    );
+    const response = await request(app).get("/tides/stations/noaa/8722588");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id");
@@ -233,9 +231,7 @@ describe("GET /tides/stations/:id", () => {
   });
 
   test("returns 404 for non-existent station ID", async () => {
-    const response = await request(app).get(
-      `/tides/stations/${encodeURIComponent("non-existent-station")}`,
-    );
+    const response = await request(app).get("/tides/stations/fake/non-existent-station");
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("message");
@@ -251,14 +247,12 @@ describe("GET /tides/stations", () => {
   });
 });
 
-describe("GET /tides/stations/:id/extremes", () => {
+describe("GET /tides/stations/:source/:id/extremes", () => {
   test("returns extremes for specific station", async () => {
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent("noaa/8722588")}/extremes`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-      });
+    const response = await request(app).get("/tides/stations/noaa/8722588/extremes").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("extremes");
@@ -267,14 +261,12 @@ describe("GET /tides/stations/:id/extremes", () => {
   });
 
   test("accepts datum and units parameters", async () => {
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent("noaa/8722588")}/extremes`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-        datum: "MLLW",
-        units: "feet",
-      });
+    const response = await request(app).get("/tides/stations/noaa/8722588/extremes").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+      datum: "MLLW",
+      units: "feet",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.datum).toBe("MLLW");
@@ -294,31 +286,29 @@ describe("GET /tides/stations/:id/extremes", () => {
 
     expect(subordinate, "could not find subordinate station").toBeDefined();
 
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent(subordinate.id)}/extremes`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-      });
+    const response = await request(app).get(`/tides/stations/${subordinate.id}/extremes`).query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("extremes");
   });
 
   test("returns 404 for non-existent station", async () => {
-    const response = await request(app).get("/tides/stations/non-existent-station/extremes").query({
-      start: "2025-12-17T00:00:00Z",
-      end: "2025-12-18T00:00:00Z",
-    });
+    const response = await request(app)
+      .get("/tides/stations/fake/non-existent-station/extremes")
+      .query({
+        start: "2025-12-17T00:00:00Z",
+        end: "2025-12-18T00:00:00Z",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("message");
   });
 
   test("uses default dates when not provided", async () => {
-    const response = await request(app).get(
-      `/tides/stations/${encodeURIComponent("noaa/8722588")}/extremes`,
-    );
+    const response = await request(app).get("/tides/stations/noaa/8722588/extremes");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("extremes");
@@ -327,27 +317,23 @@ describe("GET /tides/stations/:id/extremes", () => {
   });
 
   test("returns 400 for invalid datum", async () => {
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent("noaa/8722588")}/extremes`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-        datum: "INVALID_DATUM",
-      });
+    const response = await request(app).get("/tides/stations/noaa/8722588/extremes").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+      datum: "INVALID_DATUM",
+    });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("errors");
   });
 });
 
-describe("GET /tides/stations/:id/timeline", () => {
+describe("GET /tides/stations/:source/:id/timeline", () => {
   test("returns timeline for specific station", async () => {
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent("noaa/8722588")}/timeline`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-      });
+    const response = await request(app).get("/tides/stations/noaa/8722588/timeline").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("timeline");
@@ -356,14 +342,12 @@ describe("GET /tides/stations/:id/timeline", () => {
   });
 
   test("accepts datum and units parameters", async () => {
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent("noaa/8722588")}/timeline`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-        datum: "MLLW",
-        units: "feet",
-      });
+    const response = await request(app).get("/tides/stations/noaa/8722588/timeline").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+      datum: "MLLW",
+      units: "feet",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.datum).toBe("MLLW");
@@ -383,31 +367,29 @@ describe("GET /tides/stations/:id/timeline", () => {
 
     expect(subordinate, "could not find subordinate station").toBeDefined();
 
-    const response = await request(app)
-      .get(`/tides/stations/${encodeURIComponent(subordinate.id)}/timeline`)
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-      });
+    const response = await request(app).get(`/tides/stations/${subordinate.id}/timeline`).query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("subordinate");
   });
 
   test("returns 404 for non-existent station", async () => {
-    const response = await request(app).get("/tides/stations/non-existent-station/timeline").query({
-      start: "2025-12-17T00:00:00Z",
-      end: "2025-12-18T00:00:00Z",
-    });
+    const response = await request(app)
+      .get("/tides/stations/fake/non-existent-station/timeline")
+      .query({
+        start: "2025-12-17T00:00:00Z",
+        end: "2025-12-18T00:00:00Z",
+      });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("message");
   });
 
   test("uses default dates when not provided", async () => {
-    const response = await request(app).get(
-      `/tides/stations/${encodeURIComponent("noaa/8722588")}/timeline`,
-    );
+    const response = await request(app).get("/tides/stations/noaa/8722588/timeline");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("timeline");
@@ -451,12 +433,10 @@ describe("Error handling", () => {
 
   test("error handler handles non-validation errors", async () => {
     // Test an error from the route handlers (not validation)
-    const response = await request(app)
-      .get("/tides/stations/:id/extremes".replace(":id", "nonexistent"))
-      .query({
-        start: "2025-12-17T00:00:00Z",
-        end: "2025-12-18T00:00:00Z",
-      });
+    const response = await request(app).get("/tides/stations/fake/nonexistent/extremes").query({
+      start: "2025-12-17T00:00:00Z",
+      end: "2025-12-18T00:00:00Z",
+    });
 
     expect(response.status).toBe(404);
     expect(response.body).toHaveProperty("message");

@@ -84,11 +84,14 @@ export default {
         },
       },
     },
-    "/tides/stations/{id}": {
+    "/tides/stations/{source}/{id}": {
       get: {
         summary: "Get station by ID",
-        description: "Find a station by its ID or source ID",
-        parameters: [{ $ref: "#/components/parameters/stationId" }],
+        description: "Find a station by its ID",
+        parameters: [
+          { $ref: "#/components/parameters/stationSource" },
+          { $ref: "#/components/parameters/stationId" },
+        ],
         responses: {
           "200": {
             description: "Station found",
@@ -160,10 +163,11 @@ export default {
         },
       },
     },
-    "/tides/stations/{id}/extremes": {
+    "/tides/stations/{source}/{id}/extremes": {
       get: {
         summary: "Get extremes prediction for a specific station",
         parameters: [
+          { $ref: "#/components/parameters/stationSource" },
           { $ref: "#/components/parameters/stationId" },
           { $ref: "#/components/parameters/start" },
           { $ref: "#/components/parameters/end" },
@@ -204,10 +208,11 @@ export default {
         },
       },
     },
-    "/tides/stations/{id}/timeline": {
+    "/tides/stations/{source}/{id}/timeline": {
       get: {
         summary: "Get timeline prediction for a specific station",
         parameters: [
+          { $ref: "#/components/parameters/stationSource" },
           { $ref: "#/components/parameters/stationId" },
           { $ref: "#/components/parameters/start" },
           { $ref: "#/components/parameters/end" },
@@ -331,11 +336,20 @@ export default {
           default: "meters",
         },
       },
+      stationSource: {
+        name: "source",
+        in: "path",
+        required: true,
+        description: "Station source (e.g., 'noaa', 'ticon')",
+        schema: {
+          type: "string",
+        },
+      },
       stationId: {
         name: "id",
         in: "path",
         required: true,
-        description: "Station ID or source ID",
+        description: "Station ID within the source (e.g., '8722588', 'some-dash-string')",
         schema: {
           type: "string",
         },
