@@ -2,57 +2,17 @@ import {
   stations,
   near,
   nearest,
-  type Station,
   type NearOptions,
   type NearestOptions,
 } from "@neaps/tide-database";
-import tidePredictor, {
-  type TimeSpan,
-  type ExtremesInput,
-  Extreme,
-  TimelinePoint,
+import {
+  useStation,
+  type Station,
+  type StationPredictor,
+  type StationExtremesOptions,
+  type StationTimelineOptions,
+  type StationWaterLevelOptions,
 } from "@neaps/tide-predictor";
-
-type Units = "meters" | "feet";
-type PredictionOptions = {
-  /** Datum to return predictions in. Defaults to 'MLLW' if available for the nearest station. */
-  datum?: string;
-
-  /** Units for returned water levels. Defaults to 'meters'. */
-  units?: Units;
-};
-
-export type ExtremesOptions = ExtremesInput & PredictionOptions;
-export type TimelineOptions = TimeSpan & PredictionOptions;
-export type WaterLevelOptions = { time: Date } & PredictionOptions;
-
-export type StationPrediction = {
-  datum: string | undefined;
-  units: Units;
-  station: Station;
-  distance?: number;
-};
-
-export type StationExtremesPrediction = StationPrediction & {
-  extremes: Extreme[];
-};
-
-export type StationTimelinePrediction = StationPrediction & {
-  timeline: TimelinePoint[];
-};
-
-export type StationWaterLevelPrediction = StationPrediction & TimelinePoint;
-
-export type StationPredictor = Station & {
-  distance?: number;
-  defaultDatum?: string;
-  getExtremesPrediction: (options: ExtremesOptions) => StationExtremesPrediction;
-  getTimelinePrediction: (options: TimelineOptions) => StationTimelinePrediction;
-  getWaterLevelAtTime: (options: WaterLevelOptions) => StationWaterLevelPrediction;
-};
-
-const feetPerMeter = 3.2808399;
-const defaultUnits: Units = "meters";
 
 /**
  * Get extremes prediction using the nearest station to the given position.
@@ -69,21 +29,21 @@ const defaultUnits: Units = "meters";
  *   datum: 'MLLW', // optional, defaults to MLLW if available
  * })
  */
-export function getExtremesPrediction(options: NearestOptions & ExtremesOptions) {
+export function getExtremesPrediction(options: NearestOptions & StationExtremesOptions) {
   return nearestStation(options).getExtremesPrediction(options);
 }
 
 /**
  * Get timeline prediction using the nearest station to the given position.
  */
-export function getTimelinePrediction(options: NearestOptions & TimelineOptions) {
+export function getTimelinePrediction(options: NearestOptions & StationTimelineOptions) {
   return nearestStation(options).getTimelinePrediction(options);
 }
 
 /**
  * Get water level at a specific time using the nearest station to the given position.
  */
-export function getWaterLevelAtTime(options: NearestOptions & WaterLevelOptions) {
+export function getWaterLevelAtTime(options: NearestOptions & StationWaterLevelOptions) {
   return nearestStation(options).getWaterLevelAtTime(options);
 }
 
@@ -93,7 +53,7 @@ export function getWaterLevelAtTime(options: NearestOptions & WaterLevelOptions)
 export function nearestStation(options: NearestOptions) {
   const data = nearest(options);
   if (!data) throw new Error(`No stations found with options: ${JSON.stringify(options)}`);
-  return useStation(...data);
+  return useStation(...data, findStation);
 }
 
 /**
@@ -101,13 +61,13 @@ export function nearestStation(options: NearestOptions) {
  * @param limit Maximum number of stations to return (default: 10)
  */
 export function stationsNear(options: NearOptions) {
-  return near(options).map(([station, distance]) => useStation(station, distance));
+  return near(options).map(([station, distance]) => useStation(station, distance, findStation));
 }
 
 /**
  * Find a specific station by its ID or source ID.
  */
-export function findStation(query: string) {
+export function findStation(query: string): StationPredictor {
   const searches = [(s: Station) => s.id === query, (s: Station) => s.source.id === query];
 
   let found: Station | undefined = undefined;
@@ -119,96 +79,5 @@ export function findStation(query: string) {
 
   if (!found) throw new Error(`Station not found: ${query}`);
 
-  return useStation(found);
-}
-
-export function useStation(station: Station, distance?: number): StationPredictor {
-  // If subordinate station, use the reference station for datums and constituents
-  let reference = station;
-  if (station.type === "subordinate" && station.offsets?.reference) {
-    reference = findStation(station.offsets?.reference);
-  }
-  const { datums, harmonic_constituents } = reference;
-
-  // Use MLLW as the default datum if available
-  const defaultDatum = "MLLW" in datums ? "MLLW" : undefined;
-
-  function getPredictor({ datum = defaultDatum }: PredictionOptions = {}) {
-    let offset = 0;
-
-    if (datum) {
-      const datumOffset = datums?.[datum];
-      const mslOffset = datums?.["MSL"];
-
-      if (typeof datumOffset !== "number") {
-        throw new Error(
-          `Station ${station.id} missing ${datum} datum. Available datums: ${Object.keys(datums).join(", ")}`,
-        );
-      }
-
-      if (typeof mslOffset !== "number") {
-        throw new Error(
-          `Station ${station.id} missing MSL datum, so predictions can't be given in ${datum}.`,
-        );
-      }
-
-      offset = mslOffset - datumOffset;
-    }
-
-    return tidePredictor(harmonic_constituents, { offset });
-  }
-
-  return {
-    ...station,
-    distance,
-    datums,
-    harmonic_constituents,
-    defaultDatum,
-    getExtremesPrediction({
-      datum = defaultDatum,
-      units = defaultUnits,
-      ...options
-    }: ExtremesOptions) {
-      const extremes = getPredictor({ datum })
-        .getExtremesPrediction({ ...options, offsets: station.offsets })
-        .map((e) => toPreferredUnits(e, units));
-
-      return { datum, units, station, distance, extremes };
-    },
-
-    getTimelinePrediction({
-      datum = defaultDatum,
-      units = defaultUnits,
-      ...options
-    }: TimelineOptions) {
-      if (station.type === "subordinate") {
-        throw new Error(`Timeline predictions are not supported for subordinate stations.`);
-      }
-      const timeline = getPredictor({ datum })
-        .getTimelinePrediction(options)
-        .map((e) => toPreferredUnits(e, units));
-
-      return { datum, units, station, distance, timeline };
-    },
-
-    getWaterLevelAtTime({ time, datum = defaultDatum, units = defaultUnits }: WaterLevelOptions) {
-      if (station.type === "subordinate") {
-        throw new Error(`Water level predictions are not supported for subordinate stations.`);
-      }
-
-      const prediction = toPreferredUnits(
-        getPredictor({ datum }).getWaterLevelAtTime({ time }),
-        units,
-      );
-
-      return { datum, units, station, distance, ...prediction };
-    },
-  };
-}
-
-function toPreferredUnits<T extends { level: number }>(prediction: T, units: Units): T {
-  let { level } = prediction;
-  if (units === "feet") level *= feetPerMeter;
-  else if (units !== "meters") throw new Error(`Unsupported units: ${units}`);
-  return { ...prediction, level };
+  return useStation(found, undefined, findStation);
 }
