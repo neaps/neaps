@@ -207,11 +207,11 @@ describe("GET /tides/stations/:source/:id", () => {
     expect(Array.isArray(response.body)).toBe(true);
   });
 
-  test("respects limit parameter", async () => {
+  test("respects maxResults parameter", async () => {
     const response = await request(app).get("/tides/stations").query({
       latitude: 26.772,
       longitude: -80.05,
-      limit: 5,
+      maxResults: 5,
     });
 
     expect(response.status).toBe(200);
@@ -219,11 +219,33 @@ describe("GET /tides/stations/:source/:id", () => {
     expect(response.body.length).toBeLessThanOrEqual(5);
   });
 
-  test("returns 400 for invalid limit", async () => {
+  test("returns 400 for invalid maxResults", async () => {
     const response = await request(app).get("/tides/stations").query({
       latitude: 26.772,
       longitude: -80.05,
-      limit: 200,
+      maxResults: 200,
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("message");
+  });
+
+  test("accepts maxDistance parameter", async () => {
+    const response = await request(app).get("/tides/stations").query({
+      latitude: 26.772,
+      longitude: -80.05,
+      maxDistance: 100,
+    });
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test("returns 400 for negative maxDistance", async () => {
+    const response = await request(app).get("/tides/stations").query({
+      latitude: 26.772,
+      longitude: -80.05,
+      maxDistance: -1,
     });
 
     expect(response.status).toBe(400);
@@ -248,6 +270,41 @@ describe("GET /tides/stations", () => {
     expect(response.body[0]).not.toHaveProperty("datums");
     expect(response.body[0]).not.toHaveProperty("harmonic_constituents");
     expect(response.body[0]).not.toHaveProperty("offsets");
+  });
+
+  test("supports full-text search via query parameter", async () => {
+    const response = await request(app).get("/tides/stations").query({
+      query: "8722588",
+    });
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body.some((station: { id: string }) => station.id.includes("8722588"))).toBe(
+      true,
+    );
+    expect(response.body[0]).not.toHaveProperty("harmonic_constituents");
+  });
+
+  test("applies maxResults to query search results", async () => {
+    const response = await request(app).get("/tides/stations").query({
+      query: "United States",
+      maxResults: 2,
+    });
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeLessThanOrEqual(2);
+  });
+
+  test("defaults maxResults to 10 for query searches", async () => {
+    const response = await request(app).get("/tides/stations").query({
+      query: "noaa",
+    });
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeLessThanOrEqual(10);
   });
 });
 
@@ -281,7 +338,7 @@ describe("GET /tides/stations/:source/:id/extremes", () => {
     const stationsResponse = await request(app).get("/tides/stations").query({
       latitude: 42.3,
       longitude: -71.0,
-      limit: 20,
+      maxResults: 20,
     });
 
     const subordinate = stationsResponse.body.find(
@@ -362,7 +419,7 @@ describe("GET /tides/stations/:source/:id/timeline", () => {
     const stationsResponse = await request(app).get("/tides/stations").query({
       latitude: 42.3,
       longitude: -71.0,
-      limit: 20,
+      maxResults: 20,
     });
 
     const subordinate = stationsResponse.body.find(
@@ -504,7 +561,7 @@ describe("Error handling", () => {
     const response = await request(app).get("/tides/stations").query({
       latitude: 26.772,
       longitude: -80.05,
-      limit: 5,
+      maxResults: 5,
     });
 
     expect(response.status).toBe(200);
@@ -515,7 +572,7 @@ describe("Error handling", () => {
     const response = await request(app).get("/tides/stations").query({
       latitude: 0,
       longitude: 0,
-      limit: 1,
+      maxResults: 1,
     });
 
     // This should succeed and hit the stationsNear path

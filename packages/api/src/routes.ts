@@ -1,5 +1,5 @@
 import { json, Router, Request, Response, type ErrorRequestHandler } from "express";
-import { stations, Station } from "@neaps/tide-database";
+import { stations, Station, search } from "@neaps/tide-database";
 import { getExtremesPrediction, getTimelinePrediction, findStation, stationsNear } from "neaps";
 import { middleware as openapiValidator } from "express-openapi-validator";
 import openapi from "./openapi.js";
@@ -54,6 +54,15 @@ router.get("/tides/stations/:source/:id", (req: Request, res: Response) => {
 
 router.get("/tides/stations", (req: Request, res: Response) => {
   const { latitude, longitude } = positionOptions(req);
+  const query = req.query.query as string | undefined;
+  const maxResults = req.query.maxResults as unknown as number | undefined;
+  const maxDistance = req.query.maxDistance as unknown as number | undefined;
+
+  if (query) {
+    const results = search(query).map(stripStationDetails);
+    const limit = maxResults ?? 10;
+    return res.json(results.slice(0, limit));
+  }
 
   if (latitude === undefined || longitude === undefined) {
     return res.json(stations.map(stripStationDetails));
@@ -63,7 +72,8 @@ router.get("/tides/stations", (req: Request, res: Response) => {
     stationsNear({
       latitude,
       longitude,
-      maxResults: req.query.limit as unknown as number,
+      maxResults,
+      maxDistance,
     }),
   );
 });

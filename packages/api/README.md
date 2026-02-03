@@ -73,23 +73,27 @@ curl "http://localhost:3000/tides/timeline?latitude=26.772&longitude=-80.05&star
 
 ### GET /tides/stations
 
-Find stations by ID or near a location.
+Search stations or find them near a location.
 
 **Query Parameters:**
 
-- `id` (optional): Station ID or source ID
+- `query` (optional): Full-text search (name, ID, or location)
 - `latitude` (optional): Latitude for proximity search
 - `longitude` (optional): Longitude for proximity search
-- `limit` (optional): Maximum number of stations to return (1-100, defaults to 10)
+- `maxResults` (optional): Maximum number of stations to return (1-100, defaults to 10)
+- `maxDistance` (optional): Maximum search radius for proximity search
 
 **Examples:**
 
 ```bash
-# Find a specific station
-curl "http://localhost:3000/tides/stations?id=noaa/8722588"
+# Search stations by text
+curl "http://localhost:3000/tides/stations?query=miami"
 
 # Find stations near coordinates
-curl "http://localhost:3000/tides/stations?latitude=26.772&longitude=-80.05&limit=5"
+curl "http://localhost:3000/tides/stations?latitude=26.772&longitude=-80.05&maxResults=5"
+
+# Find stations within a specific distance
+curl "http://localhost:3000/tides/stations?latitude=26.772&longitude=-80.05&maxDistance=100"
 ```
 
 ### GET /tides/stations/:id/extremes

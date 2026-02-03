@@ -120,8 +120,17 @@ export default {
       get: {
         summary: "Find stations",
         description:
-          "Find stations near the given coordinates, or list all stations when no coordinates are provided",
+          "Search stations by name/ID, find stations near the given coordinates, or list all stations when no filters are provided",
         parameters: [
+          {
+            name: "query",
+            in: "query",
+            description: "Full-text search query (name, ID, or location)",
+            required: false,
+            schema: {
+              type: "string",
+            },
+          },
           {
             name: "latitude",
             in: "query",
@@ -145,7 +154,7 @@ export default {
             },
           },
           {
-            name: "limit",
+            name: "maxResults",
             in: "query",
             description: "Maximum number of stations to return",
             required: false,
@@ -154,6 +163,16 @@ export default {
               minimum: 1,
               maximum: 100,
               default: 10,
+            },
+          },
+          {
+            name: "maxDistance",
+            in: "query",
+            description: "Maximum search radius for proximity search",
+            required: false,
+            schema: {
+              type: "number",
+              minimum: 0,
             },
           },
         ],
