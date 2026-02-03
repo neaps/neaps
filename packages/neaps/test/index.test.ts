@@ -3,7 +3,6 @@ import {
   getExtremesPrediction,
   nearestStation,
   findStation,
-  useStation,
   getTimelinePrediction,
   getWaterLevelAtTime,
   stationsNear,
@@ -357,7 +356,7 @@ describe("datum", () => {
     );
     if (!station) expect.fail("No station without MSL datum found");
     expect(() => {
-      useStation(station).getExtremesPrediction({
+      findStation(station.id).getExtremesPrediction({
         start: new Date("2025-12-17T00:00:00Z"),
         end: new Date("2025-12-18T00:00:00Z"),
         datum: Object.keys(station.datums)[0],
@@ -371,7 +370,7 @@ describe("datum", () => {
       (s) => s.type === "reference" && Object.entries(s.datums).length === 0,
     );
     if (!station) expect.fail("No station without datums found");
-    const extremes = useStation(station).getExtremesPrediction({
+    const extremes = findStation(station.id).getExtremesPrediction({
       start: new Date("2025-12-17T00:00:00Z"),
       end: new Date("2025-12-18T00:00:00Z"),
     });

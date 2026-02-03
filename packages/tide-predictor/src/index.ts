@@ -75,3 +75,4 @@ tidePredictionFactory.constituents = constituents;
 
 export default tidePredictionFactory;
 export type { HarmonicConstituent, TimelinePoint, Extreme };
+export * from "./station.js";
