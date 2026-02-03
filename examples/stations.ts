@@ -5,7 +5,7 @@ console.log("Nearest station to 26.7, -80.05:", `${station.name} (${station.sour
 
 console.log(
   "\n5 closest stations to 45.6, -122.7:",
-  ...stationsNear({ latitude: 45.6, longitude: -122.7 }, 5).map(
+  ...stationsNear({ latitude: 45.6, longitude: -122.7, maxResults: 5 }).map(
     (s) => `\n- ${s.name} (${s.source.id}) - ${(s.distance! / 1000).toFixed(2)} km away`,
   ),
 );

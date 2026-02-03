@@ -5,7 +5,7 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "build": "npm run build --workspaces --if-present",
-    "lint": "eslint && prettier --check .",
+    "lint": "tsc -b && eslint && prettier --check .",
     "format": "prettier --write .",
     "benchmarks": "node benchmarks/noaa.ts"
   },
