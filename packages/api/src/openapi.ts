@@ -453,11 +453,20 @@ export default {
           },
           source: {
             type: "object",
-            additionalProperties: true,
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              url: { type: "string" },
+            },
           },
           license: {
             type: "object",
-            additionalProperties: true,
+            properties: {
+              type: { type: "string" },
+              commercial_use: { type: "boolean" },
+              url: { type: "string" },
+              notes: { type: "string" },
+            },
           },
           disclaimers: {
             type: "string",
@@ -476,7 +485,11 @@ export default {
             type: "array",
             items: {
               type: "object",
-              additionalProperties: true,
+              properties: {
+                name: { type: "string" },
+                amplitude: { type: "number" },
+                phase: { type: "number" },
+              },
             },
           },
           defaultDatum: {
@@ -484,10 +497,26 @@ export default {
           },
           offsets: {
             type: "object",
-            additionalProperties: true,
+            properties: {
+              reference: { type: "string" },
+              height: {
+                type: "object",
+                properties: {
+                  high: { type: "number" },
+                  low: { type: "number" },
+                  type: { type: "string", enum: ["ratio", "fixed"] },
+                },
+              },
+              time: {
+                type: "object",
+                properties: {
+                  high: { type: "number" },
+                  low: { type: "number" },
+                },
+              },
+            },
           },
         },
-        additionalProperties: true,
       },
       Extreme: {
         type: "object",
@@ -582,7 +611,11 @@ export default {
             type: "array",
             items: {
               type: "object",
-              additionalProperties: true,
+              properties: {
+                path: { type: "string" },
+                message: { type: "string" },
+                errorCode: { type: "string" },
+              },
             },
           },
         },
