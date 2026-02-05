@@ -14,7 +14,8 @@ A tide prediction engine written in TypeScript.
 This monorepo contains:
 
 - **[neaps](packages/neaps)** - Main tide prediction library with station finding
-- **[@neaps/api](packages/api)** - HTTP JSON API for tide predictions with OpenAPI specification
+- **[@neaps/api](packages/api)** - HTTP JSON API for tide predictions
+- **[@neaps/client](packages/client)** - Typed HTTP client for the API
 - **[@neaps/tide-predictor](packages/tide-predictor)** - Core harmonic tide prediction engine
 
 ## Installation

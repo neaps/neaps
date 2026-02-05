@@ -408,6 +408,16 @@ export default {
     schemas: {
       StationSummary: {
         type: "object",
+        required: [
+          "id",
+          "name",
+          "latitude",
+          "longitude",
+          "country",
+          "continent",
+          "timezone",
+          "type",
+        ],
         properties: {
           id: {
             type: "string",
@@ -440,99 +450,108 @@ export default {
         },
       },
       Station: {
+        allOf: [
+          { $ref: "#/components/schemas/StationSummary" },
+          {
+            oneOf: [
+              {
+                type: "object",
+                required: ["type", "harmonic_constituents", "datums"],
+                properties: {
+                  type: {
+                    type: "string",
+                    enum: ["reference"],
+                  },
+                  harmonic_constituents: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/HarmonicConstituent" },
+                  },
+                  datums: {
+                    type: "object",
+                    additionalProperties: {
+                      type: "number",
+                    },
+                  },
+                },
+              },
+              {
+                type: "object",
+                required: ["type", "offsets"],
+                properties: {
+                  type: {
+                    type: "string",
+                    enum: ["subordinate"],
+                  },
+                  offsets: { $ref: "#/components/schemas/Offsets" },
+                },
+              },
+            ],
+          },
+          {
+            type: "object",
+            properties: {
+              source: {
+                type: "object",
+                required: ["id", "name", "url"],
+                properties: {
+                  id: { type: "string" },
+                  name: { type: "string" },
+                  url: { type: "string" },
+                },
+              },
+              license: {
+                type: "object",
+                required: ["type", "url", "commercial_use"],
+                properties: {
+                  type: { type: "string" },
+                  commercial_use: { type: "boolean" },
+                  url: { type: "string" },
+                  notes: { type: "string" },
+                },
+              },
+              disclaimers: {
+                type: "string",
+              },
+            },
+          },
+        ],
+      },
+      HarmonicConstituent: {
+        type: "object",
+        required: ["name", "amplitude", "phase"],
+        properties: {
+          name: { type: "string" },
+          amplitude: { type: "number" },
+          phase: { type: "number" },
+        },
+      },
+      ReferenceStation: {
+        type: "object",
+        properties: {},
+      },
+      SubordinateStation: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-          },
-          name: {
-            type: "string",
-          },
-          latitude: {
-            type: "number",
-          },
-          longitude: {
-            type: "number",
-          },
-          region: {
-            type: "string",
-          },
-          country: {
-            type: "string",
-          },
-          continent: {
-            type: "string",
-          },
-          timezone: {
-            type: "string",
-          },
-          type: {
-            type: "string",
-            enum: ["reference", "subordinate"],
-          },
-          source: {
+          offsets: {},
+        },
+      },
+      Offsets: {
+        type: "object",
+        properties: {
+          reference: { type: "string" },
+          height: {
             type: "object",
             properties: {
-              id: { type: "string" },
-              name: { type: "string" },
-              url: { type: "string" },
+              high: { type: "number" },
+              low: { type: "number" },
+              type: { type: "string", enum: ["ratio", "fixed"] },
             },
           },
-          license: {
+          time: {
             type: "object",
             properties: {
-              type: { type: "string" },
-              commercial_use: { type: "boolean" },
-              url: { type: "string" },
-              notes: { type: "string" },
-            },
-          },
-          disclaimers: {
-            type: "string",
-          },
-          distance: {
-            type: "number",
-            description: "Distance from query point in meters (only for proximity searches)",
-          },
-          datums: {
-            type: "object",
-            additionalProperties: {
-              type: "number",
-            },
-          },
-          harmonic_constituents: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                amplitude: { type: "number" },
-                phase: { type: "number" },
-              },
-            },
-          },
-          defaultDatum: {
-            type: "string",
-          },
-          offsets: {
-            type: "object",
-            properties: {
-              reference: { type: "string" },
-              height: {
-                type: "object",
-                properties: {
-                  high: { type: "number" },
-                  low: { type: "number" },
-                  type: { type: "string", enum: ["ratio", "fixed"] },
-                },
-              },
-              time: {
-                type: "object",
-                properties: {
-                  high: { type: "number" },
-                  low: { type: "number" },
-                },
-              },
+              high: { type: "number" },
+              low: { type: "number" },
             },
           },
         },
@@ -559,8 +578,9 @@ export default {
         },
         required: ["time", "level", "high", "low", "label"],
       },
-      ExtremesResponse: {
+      PredictionResponse: {
         type: "object",
+        required: ["datum", "units", "station"],
         properties: {
           datum: {
             type: "string",
@@ -575,13 +595,23 @@ export default {
           distance: {
             type: "number",
           },
-          extremes: {
-            type: "array",
-            items: {
-              $ref: "#/components/schemas/Extreme",
+        },
+      },
+      ExtremesResponse: {
+        allOf: [
+          { $ref: "#/components/schemas/PredictionResponse" },
+          {
+            type: "object",
+            properties: {
+              extremes: {
+                type: "array",
+                items: {
+                  $ref: "#/components/schemas/Extreme",
+                },
+              },
             },
           },
-        },
+        ],
       },
       TimelineEntry: {
         type: "object",
@@ -597,28 +627,20 @@ export default {
         required: ["time", "level"],
       },
       TimelineResponse: {
-        type: "object",
-        properties: {
-          datum: {
-            type: "string",
-          },
-          units: {
-            type: "string",
-            enum: ["meters", "feet"],
-          },
-          station: {
-            $ref: "#/components/schemas/Station",
-          },
-          distance: {
-            type: "number",
-          },
-          timeline: {
-            type: "array",
-            items: {
-              $ref: "#/components/schemas/TimelineEntry",
+        allOf: [
+          { $ref: "#/components/schemas/PredictionResponse" },
+          {
+            type: "object",
+            properties: {
+              timeline: {
+                type: "array",
+                items: {
+                  $ref: "#/components/schemas/TimelineEntry",
+                },
+              },
             },
           },
-        },
+        ],
       },
       Error: {
         type: "object",

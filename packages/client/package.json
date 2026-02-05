@@ -1,0 +1,36 @@
+{
+  "name": "@neaps/client",
+  "version": "0.1.0",
+  "description": "Typed HTTP client for the Neaps Tide Prediction API",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neaps/neaps.git",
+    "directory": "packages/client"
+  },
+  "author": "Brandon Keepers <brandon@openwaters.io>",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "build": "npm run generate && tsdown",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.13"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7",
+    "tsx": "^4"
+  }
+}
